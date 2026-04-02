@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { Upload, Brain, AlertTriangle, HelpCircle, X, TrendingUp, TrendingDown, Minus, Settings, Activity, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { resizeImage } from './lib/imageUtils';
@@ -96,8 +96,8 @@ export default function App() {
 
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
-      // Use a slightly larger dimension for better recognition but still mobile safe
-      const resizedImage = await resizeImage(image, 1024, 1024);
+      // Use a smaller dimension for faster processing on mobile
+      const resizedImage = await resizeImage(image, 768, 768);
       const base64Data = resizedImage.split(',')[1];
       
       if (!base64Data) {
@@ -105,11 +105,10 @@ export default function App() {
       }
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.1-flash-lite-preview",
         contents: {
           parts: [
             { text: `Phân tích hình ảnh lịch sử cầu Tài Xỉu này. Ưu tiên mẫu hình '${settings.preferredPatterns}'. 
-            Hãy là một chuyên gia phân tích dữ liệu mẫu hình. 
             Đưa ra gợi ý 'Tài' hoặc 'Xỉu', 3 lý do chính xác dựa trên hình ảnh, và điểm tự tin (0-1). 
             Trả lời bằng tiếng Việt, định dạng JSON.` },
             { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
@@ -118,6 +117,7 @@ export default function App() {
         config: {
           systemInstruction: "Bạn là một hệ thống phân tích mẫu hình toán học chuyên biệt cho trò chơi Tài Xỉu. Nhiệm vụ của bạn là nhận diện các chuỗi (cầu) từ hình ảnh lịch sử và đưa ra dự đoán xác suất dựa trên các mẫu hình phổ biến (cầu bệt, cầu 1-1, cầu đảo, v.v.). Luôn trả về kết quả dưới dạng JSON hợp lệ.",
           responseMimeType: "application/json",
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
