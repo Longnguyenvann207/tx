@@ -279,57 +279,57 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <header className="mb-16 text-center flex flex-col items-center relative z-10">
+      <header className="mb-8 md:mb-16 text-center flex flex-col items-center relative z-10">
         <motion.button 
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowGuide(true)} 
           className="absolute right-0 top-0 p-2 text-slate-500 hover:text-cyan-400 transition-colors"
         >
-          <HelpCircle size={28} />
+          <HelpCircle size={24} md:size={28} />
         </motion.button>
         
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
-          <h1 className="text-6xl font-black text-white tracking-tighter mb-2 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-2 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
             PATTERN ANALYZER
           </h1>
-          <div className="h-1 w-24 bg-cyan-500 mx-auto rounded-full shadow-[0_0_15px_rgba(6,182,212,0.5)]" />
+          <div className="h-1 w-16 md:w-24 bg-cyan-500 mx-auto rounded-full shadow-[0_0_15px_rgba(6,182,212,0.5)]" />
         </motion.div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <div className="bg-slate-900/50 backdrop-blur-md p-1 rounded-2xl flex gap-1 border border-slate-800 shadow-xl">
+        <div className="flex flex-col gap-4 items-center w-full max-w-md">
+          <div className="bg-slate-900/50 backdrop-blur-md p-1 rounded-2xl flex w-full gap-1 border border-slate-800 shadow-xl">
             <button 
               onClick={() => setActiveTab('analyze')}
-              className={`relative px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'analyze' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 ${activeTab === 'analyze' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
             >
               {activeTab === 'analyze' && (
                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-slate-800 rounded-xl -z-10" />
               )}
-              <div className="flex items-center gap-2">
-                <Activity size={16} /> Phân tích
+              <div className="flex items-center justify-center gap-2">
+                <Activity size={14} md:size={16} /> Phân tích
               </div>
             </button>
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`relative px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'settings' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 ${activeTab === 'settings' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
             >
               {activeTab === 'settings' && (
                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-slate-800 rounded-xl -z-10" />
               )}
-              <div className="flex items-center gap-2">
-                <Settings size={16} /> Cài đặt
+              <div className="flex items-center justify-center gap-2">
+                <Settings size={14} md:size={16} /> Cài đặt
               </div>
             </button>
           </div>
 
-          <div className="bg-slate-900/50 backdrop-blur-md p-1 rounded-2xl flex gap-1 border border-slate-800 shadow-xl">
+          <div className="bg-slate-900/50 backdrop-blur-md p-1 rounded-2xl flex w-full gap-1 border border-slate-800 shadow-xl">
             <button 
               onClick={() => setMode('Focus')}
-              className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${mode === 'Focus' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 ${mode === 'Focus' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
             >
               {mode === 'Focus' && (
                 <motion.div layoutId="mode-bg" className="absolute inset-0 bg-cyan-500/10 rounded-xl -z-10 border border-cyan-500/20" />
@@ -338,7 +338,7 @@ export default function App() {
             </button>
             <button 
               onClick={() => setMode('Pro')}
-              className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${mode === 'Pro' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 ${mode === 'Pro' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
             >
               {mode === 'Pro' && (
                 <motion.div layoutId="mode-bg" className="absolute inset-0 bg-cyan-500/10 rounded-xl -z-10 border border-cyan-500/20" />
@@ -428,17 +428,32 @@ export default function App() {
                   <h2 className="text-2xl font-bold text-white tracking-tight">Dữ liệu đầu vào</h2>
                 </div>
                 
-                <div className="relative group mb-8">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageUpload} 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  />
-                  <div className="border-2 border-dashed border-slate-800 group-hover:border-cyan-500/50 rounded-2xl p-8 transition-all bg-slate-950/30 text-center">
-                    <Upload className="mx-auto mb-4 text-slate-600 group-hover:text-cyan-400 transition-colors" size={32} />
-                    <p className="text-slate-400 font-medium">Kéo thả hoặc nhấp để tải ảnh</p>
-                    <p className="text-slate-600 text-xs mt-1">Hỗ trợ JPG, PNG, WEBP (Max 5MB)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                  <div className="relative group">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageUpload} 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="border-2 border-dashed border-slate-800 group-hover:border-cyan-500/50 rounded-2xl p-6 md:p-8 transition-all bg-slate-950/30 text-center flex flex-col items-center justify-center h-full">
+                      <Upload className="mb-3 text-slate-600 group-hover:text-cyan-400 transition-colors" size={28} />
+                      <p className="text-slate-400 font-medium text-sm">Tải ảnh lên</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment"
+                      onChange={handleImageUpload} 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="border-2 border-dashed border-slate-800 group-hover:border-fuchsia-500/50 rounded-2xl p-6 md:p-8 transition-all bg-slate-950/30 text-center flex flex-col items-center justify-center h-full">
+                      <Activity className="mb-3 text-slate-600 group-hover:text-fuchsia-400 transition-colors" size={28} />
+                      <p className="text-slate-400 font-medium text-sm">Chụp ảnh mới</p>
+                    </div>
                   </div>
                 </div>
 
@@ -517,7 +532,7 @@ export default function App() {
                         <div className={`absolute inset-0 opacity-10 blur-3xl transition-colors duration-500 ${analysis.suggestion === 'Tài' ? 'bg-red-500' : 'bg-cyan-500'}`} />
                         
                         <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-4 relative z-10">GỢI Ý TỪ HỆ THỐNG</p>
-                        <div className={`text-9xl font-black mb-6 tracking-tighter relative z-10 drop-shadow-2xl transition-colors duration-500 ${analysis.suggestion === 'Tài' ? 'text-red-500' : 'text-cyan-400'}`}>
+                        <div className={`text-7xl md:text-9xl font-black mb-6 tracking-tighter relative z-10 drop-shadow-2xl transition-colors duration-500 ${analysis.suggestion === 'Tài' ? 'text-red-500' : 'text-cyan-400'}`}>
                           {analysis.suggestion}
                         </div>
 
