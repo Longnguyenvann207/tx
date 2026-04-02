@@ -1,0 +1,5 @@
+{
+  "name": "Tài Xỉu Pattern Analyzer",
+  "description": "An analysis tool to help users identify patterns in Tài Xỉu betting history from images.",
+  "requestFramePermissions": []
+}
