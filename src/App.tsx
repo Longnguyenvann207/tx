@@ -90,14 +90,21 @@ export default function App() {
     setError(null);
 
     try {
-      // Try multiple ways to get the API key
-      const apiKey = 
-        (import.meta.env.VITE_GEMINI_API_KEY as string) || 
-        process.env.GEMINI_API_KEY || 
-        process.env.VITE_GEMINI_API_KEY;
-        
-      if (!apiKey || apiKey === "undefined") {
-        throw new Error("Thiếu API Key. Vui lòng kiểm tra cài đặt Environment Variables trên Netlify.");
+      // Robust API key detection for both local and production (Vercel/Netlify)
+      let apiKey = "";
+      
+      // 1. Check Vite's built-in env (standard for Vite)
+      if (import.meta.env.VITE_GEMINI_API_KEY) {
+        apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
+      } 
+      // 2. Check process.env (defined in vite.config.ts)
+      else if (typeof process !== 'undefined' && process.env) {
+        apiKey = (process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY) as string;
+      }
+
+      // Cleanup if it's a string "undefined" or empty
+      if (!apiKey || apiKey === "undefined" || apiKey === "null" || apiKey.trim() === "") {
+        throw new Error("Không tìm thấy API Key. Hãy đảm bảo bạn đã thêm 'VITE_GEMINI_API_KEY' vào Environment Variables trên Netlify và đã 'Clear cache and deploy site' lại.");
       }
 
       const ai = new GoogleGenAI({ apiKey });
