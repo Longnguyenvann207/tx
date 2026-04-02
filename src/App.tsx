@@ -44,11 +44,15 @@ export default function App() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Revoke old blob URL to free memory
+      if (image && image.startsWith('blob:')) {
+        URL.revokeObjectURL(image);
+      }
+      
+      const url = URL.createObjectURL(file);
+      setImage(url);
+      setAnalysis(null);
+      setError(null);
     }
   };
 
@@ -86,8 +90,14 @@ export default function App() {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-      const resizedImage = await resizeImage(image, 1024, 1024);
+      if (!process.env.GEMINI_API_KEY) {
+        throw new Error("Thiếu API Key. Vui lòng kiểm tra cài đặt.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      
+      // Resize to a smaller dimension for mobile stability
+      const resizedImage = await resizeImage(image, 800, 800);
       const base64Data = resizedImage.split(',')[1];
       
       const response = await ai.models.generateContent({
@@ -122,14 +132,31 @@ export default function App() {
           }
         }
       });
-      const result = JSON.parse(response.text || "{}") as AnalysisResult;
+      
+      if (!response.text) {
+        throw new Error("Không nhận được phản hồi từ AI.");
+      }
+
+      let result: AnalysisResult;
+      try {
+        result = JSON.parse(response.text) as AnalysisResult;
+      } catch (parseErr) {
+        console.error("JSON Parse Error:", parseErr, response.text);
+        throw new Error("Dữ liệu từ AI không hợp lệ. Vui lòng thử lại.");
+      }
+      
       setAnalysis(result);
       playSound('success');
       showToast("Phân tích thành công!");
-    } catch (error: any) {
-      console.error(error);
-      setError("Lỗi phân tích hình ảnh.");
+    } catch (err: any) {
+      console.error("Analysis Error:", err);
+      let msg = "Lỗi phân tích hình ảnh. Vui lòng thử lại.";
+      if (err.message?.includes("API Key")) msg = err.message;
+      if (err.message?.includes("Failed to load image")) msg = "Không thể tải ảnh. Vui lòng chọn ảnh khác.";
+      
+      setError(msg);
       playSound('error');
+      showToast("Lỗi phân tích!");
     } finally {
       setLoading(false);
     }
