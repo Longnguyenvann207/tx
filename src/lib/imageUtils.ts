@@ -1,7 +1,6 @@
 export const resizeImage = (src: string, maxWidth: number, maxHeight: number): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.src = src;
     
     img.onload = () => {

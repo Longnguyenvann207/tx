@@ -96,19 +96,27 @@ export default function App() {
 
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
-      // Resize to a smaller dimension for mobile stability
-      const resizedImage = await resizeImage(image, 800, 800);
+      // Use a slightly larger dimension for better recognition but still mobile safe
+      const resizedImage = await resizeImage(image, 1024, 1024);
       const base64Data = resizedImage.split(',')[1];
       
+      if (!base64Data) {
+        throw new Error("Dữ liệu ảnh không hợp lệ.");
+      }
+
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-lite-preview",
+        model: "gemini-3-flash-preview",
         contents: {
           parts: [
-            { text: `Phân tích nhanh hình ảnh lịch sử cầu Tài Xỉu này, ưu tiên mẫu hình '${settings.preferredPatterns}'. Đưa ra gợi ý 'Tài' hoặc 'Xỉu', 3 từ khóa lý do (kèm đánh giá đóng góp 'Tài', 'Xỉu', 'Neutral') và điểm tự tin (0-1). Trả lời ngắn gọn bằng tiếng Việt.` },
+            { text: `Phân tích hình ảnh lịch sử cầu Tài Xỉu này. Ưu tiên mẫu hình '${settings.preferredPatterns}'. 
+            Hãy là một chuyên gia phân tích dữ liệu mẫu hình. 
+            Đưa ra gợi ý 'Tài' hoặc 'Xỉu', 3 lý do chính xác dựa trên hình ảnh, và điểm tự tin (0-1). 
+            Trả lời bằng tiếng Việt, định dạng JSON.` },
             { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
           ]
         },
         config: {
+          systemInstruction: "Bạn là một hệ thống phân tích mẫu hình toán học chuyên biệt cho trò chơi Tài Xỉu. Nhiệm vụ của bạn là nhận diện các chuỗi (cầu) từ hình ảnh lịch sử và đưa ra dự đoán xác suất dựa trên các mẫu hình phổ biến (cầu bệt, cầu 1-1, cầu đảo, v.v.). Luôn trả về kết quả dưới dạng JSON hợp lệ.",
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -134,7 +142,7 @@ export default function App() {
       });
       
       if (!response.text) {
-        throw new Error("Không nhận được phản hồi từ AI.");
+        throw new Error("AI không thể đọc được dữ liệu từ ảnh này. Vui lòng chụp rõ hơn.");
       }
 
       let result: AnalysisResult;
@@ -149,10 +157,14 @@ export default function App() {
       playSound('success');
       showToast("Phân tích thành công!");
     } catch (err: any) {
-      console.error("Analysis Error:", err);
+      console.error("Analysis Error Details:", err);
       let msg = "Lỗi phân tích hình ảnh. Vui lòng thử lại.";
+      
       if (err.message?.includes("API Key")) msg = err.message;
-      if (err.message?.includes("Failed to load image")) msg = "Không thể tải ảnh. Vui lòng chọn ảnh khác.";
+      else if (err.message?.includes("Failed to load image")) msg = "Không thể tải ảnh. Vui lòng chọn ảnh khác.";
+      else if (err.message?.includes("quota")) msg = "Hệ thống đang quá tải (hết quota). Vui lòng đợi 1 phút.";
+      else if (err.message?.includes("safety")) msg = "Ảnh bị từ chối vì lý do an toàn. Vui lòng chụp rõ cầu hơn.";
+      else if (err.message) msg = err.message;
       
       setError(msg);
       playSound('error');
