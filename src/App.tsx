@@ -44,15 +44,25 @@ export default function App() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Revoke old blob URL to free memory
-      if (image && image.startsWith('blob:')) {
-        URL.revokeObjectURL(image);
-      }
-      
-      const url = URL.createObjectURL(file);
-      setImage(url);
-      setAnalysis(null);
+      setLoading(true);
       setError(null);
+      
+      // Use FileReader for better compatibility on some mobile browsers
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setImage(result);
+          setAnalysis(null);
+          setLoading(false);
+          showToast("Đã nạp ảnh thành công!");
+        }
+      };
+      reader.onerror = () => {
+        setError("Không thể đọc file ảnh. Vui lòng thử lại.");
+        setLoading(false);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -90,27 +100,26 @@ export default function App() {
     setError(null);
 
     try {
-      // Robust API key detection for both local and production (Vercel/Netlify)
+      // Robust API key detection
       let apiKey = "";
       
-      // 1. Check Vite's built-in env (standard for Vite)
+      // Try multiple sources
       if (import.meta.env.VITE_GEMINI_API_KEY) {
-        apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
-      } 
-      // 2. Check process.env (defined in vite.config.ts)
-      else if (typeof process !== 'undefined' && process.env) {
-        apiKey = (process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY) as string;
+        apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      } else if (typeof process !== 'undefined' && process.env.VITE_GEMINI_API_KEY) {
+        apiKey = process.env.VITE_GEMINI_API_KEY;
+      } else if (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) {
+        apiKey = process.env.GEMINI_API_KEY;
       }
 
-      // Cleanup if it's a string "undefined" or empty
-      if (!apiKey || apiKey === "undefined" || apiKey === "null" || apiKey.trim() === "") {
-        throw new Error("Không tìm thấy API Key. Hãy đảm bảo bạn đã thêm 'VITE_GEMINI_API_KEY' vào Environment Variables trên Netlify và đã 'Clear cache and deploy site' lại.");
+      if (!apiKey || apiKey === "undefined" || apiKey.trim() === "") {
+        throw new Error("Lỗi: Chưa cấu hình API Key. Nếu bạn dùng Netlify, hãy thêm 'VITE_GEMINI_API_KEY' vào Environment Variables và Deploy lại.");
       }
 
       const ai = new GoogleGenAI({ apiKey });
       
-      // Use a smaller dimension for faster processing on mobile
-      const resizedImage = await resizeImage(image, 768, 768);
+      // Use a smaller dimension (512px) for much faster processing on mobile
+      const resizedImage = await resizeImage(image, 512, 512);
       const base64Data = resizedImage.split(',')[1];
       
       if (!base64Data) {
@@ -121,16 +130,14 @@ export default function App() {
         model: "gemini-3.1-flash-lite-preview",
         contents: {
           parts: [
-            { text: `Phân tích hình ảnh lịch sử cầu Tài Xỉu này. Ưu tiên mẫu hình '${settings.preferredPatterns}'. 
-            Đưa ra gợi ý 'Tài' hoặc 'Xỉu', 3 lý do chính xác dựa trên hình ảnh, và điểm tự tin (0-1). 
-            Trả lời bằng tiếng Việt, định dạng JSON.` },
+            { text: `Phân tích cầu Tài Xỉu (ưu tiên '${settings.preferredPatterns}'). Trả về JSON: suggestion (Tài/Xỉu), confidenceScore (0-1), reasons (mảng 3 đối tượng {text, contribution}).` },
             { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
           ]
         },
         config: {
-          systemInstruction: "Bạn là một hệ thống phân tích mẫu hình toán học chuyên biệt cho trò chơi Tài Xỉu. Nhiệm vụ của bạn là nhận diện các chuỗi (cầu) từ hình ảnh lịch sử và đưa ra dự đoán xác suất dựa trên các mẫu hình phổ biến (cầu bệt, cầu 1-1, cầu đảo, v.v.). Luôn trả về kết quả dưới dạng JSON hợp lệ.",
+          systemInstruction: "Bạn là AI nhận diện cầu Tài Xỉu siêu tốc. Chỉ trả về JSON.",
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
