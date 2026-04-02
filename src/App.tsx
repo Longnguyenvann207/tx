@@ -90,9 +90,14 @@ export default function App() {
     setError(null);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
-      if (!apiKey) {
-        throw new Error("Thiếu API Key. Vui lòng kiểm tra cài đặt.");
+      // Try multiple ways to get the API key
+      const apiKey = 
+        (import.meta.env.VITE_GEMINI_API_KEY as string) || 
+        process.env.GEMINI_API_KEY || 
+        process.env.VITE_GEMINI_API_KEY;
+        
+      if (!apiKey || apiKey === "undefined") {
+        throw new Error("Thiếu API Key. Vui lòng kiểm tra cài đặt Environment Variables trên Netlify.");
       }
 
       const ai = new GoogleGenAI({ apiKey });
