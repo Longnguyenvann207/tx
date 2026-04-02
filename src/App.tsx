@@ -90,11 +90,12 @@ export default function App() {
     setError(null);
 
     try {
-      if (!process.env.GEMINI_API_KEY) {
+      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+      if (!apiKey) {
         throw new Error("Thiếu API Key. Vui lòng kiểm tra cài đặt.");
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       
       // Use a smaller dimension for faster processing on mobile
       const resizedImage = await resizeImage(image, 768, 768);
