@@ -53,7 +53,7 @@ export default function App() {
     volume: 0.5,
     toastEnabled: true,
     preferredPatterns: 'Cầu bệt',
-    theme: 'Neon' as 'Neon' | 'Cyber',
+    theme: 'Neon' as 'Neon' | 'Cyber' | 'Gold',
     balance: 1000000, // Default 1M VND
     autoAnalyze: true,
   });
@@ -295,12 +295,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden p-4 md:p-8">
+    <div className={`min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden p-4 md:p-8 ${settings.theme === 'Gold' ? 'theme-gold' : ''}`}>
       {/* Dynamic Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-fuchsia-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
-        <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[120px] animate-pulse delay-1000" />
+        {settings.theme === 'Gold' ? (
+          <>
+            <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-gold-600/10 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-gold-900/10 rounded-full blur-[120px] animate-pulse delay-700" />
+            <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] bg-gold-800/5 rounded-full blur-[120px] animate-pulse delay-1000" />
+          </>
+        ) : (
+          <>
+            <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-fuchsia-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
+            <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[120px] animate-pulse delay-1000" />
+          </>
+        )}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
         <div className="absolute inset-0 bg-[grid-white_0.02] [mask-image:radial-gradient(white,transparent_85%)]" />
       </div>
@@ -311,7 +321,11 @@ export default function App() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 right-6 bg-slate-900/90 backdrop-blur-md border border-cyan-500/30 text-cyan-400 px-6 py-3 rounded-xl shadow-2xl shadow-cyan-500/10 z-[100] flex items-center gap-3"
+            className={`fixed top-6 right-6 backdrop-blur-md border px-6 py-3 rounded-xl shadow-2xl z-[100] flex items-center gap-3 ${
+              settings.theme === 'Gold' 
+                ? 'bg-gold-950/90 border-gold-500/30 text-gold-400 shadow-gold-500/10' 
+                : 'bg-slate-900/90 border-cyan-500/30 text-cyan-400 shadow-cyan-500/10'
+            }`}
           >
             <Activity size={18} className="animate-pulse" />
             <span className="font-semibold">{toast}</span>
@@ -419,9 +433,9 @@ export default function App() {
           className="mb-8 md:mb-12"
         >
           <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20">
-              <div className="w-2 h-2 rounded-full bg-cyan-500 animate-ping" />
-              <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">AI Engine v3.1 Live</span>
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20 text-gold-400' : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'}`}>
+              <div className={`w-2 h-2 rounded-full animate-ping ${settings.theme === 'Gold' ? 'bg-gold-500' : 'bg-cyan-500'}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest">AI Engine v3.1 Live</span>
             </div>
             {settings.autoAnalyze && (
               <motion.div 
@@ -437,7 +451,7 @@ export default function App() {
           <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-4 leading-none">
             <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-slate-500">PATTERN</span>
             <br />
-            <span className="text-cyan-500 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">ANALYZER</span>
+            <span className={`${settings.theme === 'Gold' ? 'text-gold-gradient drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'text-cyan-500 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]'}`}>ANALYZER</span>
           </h1>
           <p className="text-slate-500 font-medium max-w-md mx-auto text-sm md:text-base">Hệ thống nhận diện mẫu hình toán học và dự đoán xác suất Tài Xỉu thời gian thực.</p>
         </motion.div>
@@ -452,7 +466,7 @@ export default function App() {
                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-white/5 rounded-2xl -z-10 border border-white/10" />
               )}
               <div className="flex items-center justify-center gap-2.5">
-                <Activity size={16} className={activeTab === 'analyze' ? 'text-cyan-400' : ''} /> PHÂN TÍCH
+                <Activity size={16} className={activeTab === 'analyze' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400') : ''} /> PHÂN TÍCH
               </div>
             </button>
             <button 
@@ -463,7 +477,7 @@ export default function App() {
                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-white/5 rounded-2xl -z-10 border border-white/10" />
               )}
               <div className="flex items-center justify-center gap-2.5">
-                <ShieldAlert size={16} className={activeTab === 'history' ? 'text-cyan-400' : ''} /> LỊCH SỬ
+                <ShieldAlert size={16} className={activeTab === 'history' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400') : ''} /> LỊCH SỬ
               </div>
             </button>
             <button 
@@ -474,7 +488,7 @@ export default function App() {
                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-white/5 rounded-2xl -z-10 border border-white/10" />
               )}
               <div className="flex items-center justify-center gap-2.5">
-                <Brain size={16} className={activeTab === 'patterns' ? 'text-cyan-400' : ''} /> MẪU HÌNH
+                <Brain size={16} className={activeTab === 'patterns' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400') : ''} /> MẪU HÌNH
               </div>
             </button>
             <button 
@@ -485,7 +499,7 @@ export default function App() {
                 <motion.div layoutId="tab-bg" className="absolute inset-0 bg-white/5 rounded-2xl -z-10 border border-white/10" />
               )}
               <div className="flex items-center justify-center gap-2.5">
-                <Settings size={16} className={activeTab === 'settings' ? 'text-cyan-400' : ''} /> CÀI ĐẶT
+                <Settings size={16} className={activeTab === 'settings' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400') : ''} /> CÀI ĐẶT
               </div>
             </button>
           </div>
@@ -493,28 +507,28 @@ export default function App() {
           <div className="bg-slate-900/40 backdrop-blur-2xl p-1.5 rounded-2xl flex w-full gap-1 border border-white/5 shadow-2xl">
             <button 
               onClick={() => setMode('Focus')}
-              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Focus' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Focus' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400') : 'text-slate-500 hover:text-slate-300'}`}
             >
               {mode === 'Focus' && (
-                <motion.div layoutId="mode-bg" className="absolute inset-0 bg-cyan-500/10 rounded-xl -z-10 border border-cyan-500/20" />
+                <motion.div layoutId="mode-bg" className={`absolute inset-0 rounded-xl -z-10 border ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20' : 'bg-cyan-500/10 border-cyan-500/20'}`} />
               )}
               FOCUS
             </button>
             <button 
               onClick={() => setMode('Quick')}
-              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Quick' ? 'text-fuchsia-400' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Quick' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-fuchsia-400') : 'text-slate-500 hover:text-slate-300'}`}
             >
               {mode === 'Quick' && (
-                <motion.div layoutId="mode-bg" className="absolute inset-0 bg-fuchsia-500/10 rounded-xl -z-10 border border-fuchsia-500/20" />
+                <motion.div layoutId="mode-bg" className={`absolute inset-0 rounded-xl -z-10 border ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20' : 'bg-fuchsia-500/10 border-fuchsia-500/20'}`} />
               )}
               QUICK
             </button>
             <button 
               onClick={() => setMode('Pro')}
-              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Pro' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Pro' ? (settings.theme === 'Gold' ? 'text-gold-400' : 'text-white') : 'text-slate-500 hover:text-slate-300'}`}
             >
               {mode === 'Pro' && (
-                <motion.div layoutId="mode-bg" className="absolute inset-0 bg-white/5 rounded-xl -z-10 border border-white/10" />
+                <motion.div layoutId="mode-bg" className={`absolute inset-0 rounded-xl -z-10 border ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20' : 'bg-white/5 border-white/10'}`} />
               )}
               PRO
             </button>
@@ -640,7 +654,7 @@ export default function App() {
                           <Area 
                             type="monotone" 
                             dataKey="confidenceScore" 
-                            stroke="#06b6d4" 
+                            stroke={settings.theme === 'Gold' ? '#eab308' : '#06b6d4'} 
                             strokeWidth={3}
                             fillOpacity={1} 
                             fill="url(#colorConf)" 
@@ -691,14 +705,14 @@ export default function App() {
                       </div>
 
                       <div className="flex items-center gap-5">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg shadow-2xl ${item.suggestion === 'Tài' ? 'bg-red-500/20 text-red-500' : 'bg-cyan-500/20 text-cyan-400'}`}>
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg shadow-2xl ${item.suggestion === 'Tài' ? 'bg-red-500/20 text-red-500' : (settings.theme === 'Gold' ? 'bg-gold-500/20 text-gold-400' : 'bg-cyan-500/20 text-cyan-400')}`}>
                           {item.suggestion[0]}
                         </div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-white font-black tracking-tight">{item.suggestion}</p>
                             <span className="text-[10px] font-black text-slate-500">•</span>
-                            <p className="text-cyan-400 font-mono text-xs">{(item.confidenceScore * 100).toFixed(0)}%</p>
+                            <p className={`${settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400'} font-mono text-xs`}>{(item.confidenceScore * 100).toFixed(0)}%</p>
                           </div>
                           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{new Date(item.timestamp!).toLocaleTimeString()}</p>
                         </div>
@@ -747,7 +761,7 @@ export default function App() {
                             setImage(item.imageUrl!);
                             setActiveTab('analyze');
                           }}
-                          className="px-5 py-2.5 rounded-xl bg-white/5 text-[10px] font-black text-white hover:bg-cyan-600 transition-all uppercase tracking-[0.2em] group-hover:scale-105 active:scale-95"
+                          className={`px-5 py-2.5 rounded-xl text-[10px] font-black text-white transition-all uppercase tracking-[0.2em] group-hover:scale-105 active:scale-95 ${settings.theme === 'Gold' ? 'bg-gold-500/10 hover:bg-gold-600' : 'bg-white/5 hover:bg-cyan-600'}`}
                         >
                           XEM LẠI
                         </button>
@@ -766,8 +780,8 @@ export default function App() {
               className="bg-slate-900/40 backdrop-blur-2xl p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-white/5 max-w-4xl mx-auto w-full"
             >
               <div className="flex items-center gap-5 mb-10">
-                <div className="p-4 bg-fuchsia-500/10 rounded-2xl border border-fuchsia-500/20 shadow-[0_0_20px_rgba(217,70,239,0.15)]">
-                  <Brain className="w-8 h-8 text-fuchsia-400" />
+                <div className={`p-4 rounded-2xl border shadow-[0_0_20px_rgba(217,70,239,0.15)] ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20 text-gold-400' : 'bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-400'}`}>
+                  <Brain className="w-8 h-8" />
                 </div>
                 <div>
                   <h2 className="text-3xl font-black text-white tracking-tight">Thư viện mẫu hình</h2>
@@ -781,12 +795,12 @@ export default function App() {
                     key={i}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1, transition: { delay: i * 0.1 } }}
-                    className="bg-white/[0.02] p-8 rounded-[2rem] border border-white/5 hover:border-fuchsia-500/30 hover:bg-fuchsia-500/[0.02] transition-all group cursor-default"
+                    className={`bg-white/[0.02] p-8 rounded-[2rem] border border-white/5 transition-all group cursor-default ${settings.theme === 'Gold' ? 'hover:border-gold-500/30 hover:bg-gold-500/[0.02]' : 'hover:border-fuchsia-500/30 hover:bg-fuchsia-500/[0.02]'}`}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className={`text-2xl font-black tracking-tighter ${p.color}`}>{p.name}</h4>
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-fuchsia-500/20 transition-colors">
-                        <TrendingUp size={16} className={p.color} />
+                      <h4 className={`text-2xl font-black tracking-tighter ${settings.theme === 'Gold' ? 'text-gold-400' : p.color}`}>{p.name}</h4>
+                      <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center transition-colors ${settings.theme === 'Gold' ? 'group-hover:bg-gold-500/20' : 'group-hover:bg-fuchsia-500/20'}`}>
+                        <TrendingUp size={16} className={settings.theme === 'Gold' ? 'text-gold-400' : p.color} />
                       </div>
                     </div>
                     <p className="text-slate-400 text-sm leading-relaxed font-medium">{p.desc}</p>
@@ -807,8 +821,8 @@ export default function App() {
               className="bg-slate-900/40 backdrop-blur-2xl p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-white/5 max-w-2xl mx-auto w-full"
             >
               <div className="flex items-center gap-5 mb-12">
-                <div className="p-4 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                  <Settings className="w-8 h-8 text-cyan-400" />
+                <div className={`p-4 rounded-2xl border shadow-[0_0_20px_rgba(6,182,212,0.15)] ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20 text-gold-400' : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'}`}>
+                  <Settings className="w-8 h-8" />
                 </div>
                 <div>
                   <h2 className="text-3xl font-black text-white tracking-tight">Cấu hình hệ thống</h2>
@@ -823,7 +837,7 @@ export default function App() {
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Âm lượng hệ thống</label>
                       <p className="text-xs text-slate-400 mt-1">Điều chỉnh âm thanh phản hồi</p>
                     </div>
-                    <span className="text-cyan-400 font-mono font-black text-xl">{(settings.volume * 100).toFixed(0)}%</span>
+                    <span className={`font-mono font-black text-xl ${settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400'}`}>{(settings.volume * 100).toFixed(0)}%</span>
                   </div>
                   <input 
                     type="range" min="0" max="1" step="0.1" value={settings.volume} 
@@ -869,6 +883,29 @@ export default function App() {
                 
                 <div className="space-y-6">
                   <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Chủ đề giao diện</label>
+                    <p className="text-xs text-slate-400 mt-1">Thay đổi phong cách hiển thị</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: 'Neon', name: 'Neon Blue', color: 'bg-cyan-500' },
+                      { id: 'Cyber', name: 'Cyber Pink', color: 'bg-fuchsia-500' },
+                      { id: 'Gold', name: 'Luxury Gold', color: 'bg-gold-500' }
+                    ].map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setSettings({...settings, theme: t.id as any})}
+                        className={`px-4 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500 flex flex-col items-center gap-3 ${settings.theme === t.id ? 'bg-white/5 border-white/20 text-white shadow-xl scale-105' : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/10'}`}
+                      >
+                        <div className={`w-6 h-6 rounded-full ${t.color} ${settings.theme === t.id ? 'ring-4 ring-white/10' : ''}`} />
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mẫu hình ưu tiên</label>
                     <p className="text-xs text-slate-400 mt-1">AI sẽ tập trung tìm kiếm mẫu hình này</p>
                   </div>
@@ -888,15 +925,15 @@ export default function App() {
                 <div className="space-y-6 pt-6 border-t border-white/5">
                   <div className="flex justify-between items-end">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-cyan-500/10 rounded-lg">
-                        <Wallet size={16} className="text-cyan-400" />
+                      <div className={`p-2 rounded-lg ${settings.theme === 'Gold' ? 'bg-gold-500/10 text-gold-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
+                        <Wallet size={16} />
                       </div>
                       <div>
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Quản lý vốn (VND)</label>
                         <p className="text-xs text-slate-400 mt-1">Số dư khởi đầu để AI tính toán</p>
                       </div>
                     </div>
-                    <span className="text-cyan-400 font-mono font-black text-xl">{settings.balance.toLocaleString('vi-VN')}</span>
+                    <span className={`font-mono font-black text-xl ${settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400'}`}>{settings.balance.toLocaleString('vi-VN')}</span>
                   </div>
                   <input 
                     type="range" min="100000" max="10000000" step="100000" value={settings.balance} 
@@ -920,8 +957,8 @@ export default function App() {
                 className={`bg-slate-900/40 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 ${mode === 'Pro' ? 'lg:col-span-5' : 'w-full'}`}
               >
                 <div className="flex items-center gap-5 mb-10">
-                  <div className="p-4 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                    <Upload className="w-8 h-8 text-cyan-400" />
+                  <div className={`p-4 rounded-2xl border shadow-[0_0_20px_rgba(6,182,212,0.15)] ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20 text-gold-400' : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'}`}>
+                    <Upload className="w-8 h-8" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Dữ liệu đầu vào</h2>
@@ -937,9 +974,9 @@ export default function App() {
                       onChange={handleImageUpload} 
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <div className="border-2 border-dashed border-white/5 group-hover:border-cyan-500/50 rounded-3xl p-8 transition-all duration-500 bg-white/[0.02] hover:bg-cyan-500/[0.02] text-center flex flex-col items-center justify-center h-full group-active:scale-95">
-                      <div className="w-14 h-14 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-colors">
-                        <Upload className="text-slate-500 group-hover:text-cyan-400 transition-colors" size={24} />
+                    <div className={`border-2 border-dashed rounded-3xl p-8 transition-all duration-500 bg-white/[0.02] text-center flex flex-col items-center justify-center h-full group-active:scale-95 ${settings.theme === 'Gold' ? 'border-gold-500/10 group-hover:border-gold-500/50 hover:bg-gold-500/[0.02]' : 'border-white/5 group-hover:border-cyan-500/50 hover:bg-cyan-500/[0.02]'}`}>
+                      <div className={`w-14 h-14 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4 transition-colors ${settings.theme === 'Gold' ? 'group-hover:bg-gold-500/20' : 'group-hover:bg-cyan-500/20'}`}>
+                        <Upload className={`text-slate-500 transition-colors ${settings.theme === 'Gold' ? 'group-hover:text-gold-400' : 'group-hover:text-cyan-400'}`} size={24} />
                       </div>
                       <p className="text-slate-400 font-bold text-sm tracking-tight">Tải ảnh lên</p>
                       <p className="text-[10px] text-slate-600 mt-1 uppercase font-black">Gallery</p>
@@ -954,9 +991,9 @@ export default function App() {
                       onChange={handleImageUpload} 
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
-                    <div className="border-2 border-dashed border-white/5 group-hover:border-fuchsia-500/50 rounded-3xl p-8 transition-all duration-500 bg-white/[0.02] hover:bg-fuchsia-500/[0.02] text-center flex flex-col items-center justify-center h-full group-active:scale-95">
-                      <div className="w-14 h-14 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4 group-hover:bg-fuchsia-500/20 transition-colors">
-                        <Activity className="text-slate-500 group-hover:text-fuchsia-400 transition-colors" size={24} />
+                    <div className={`border-2 border-dashed rounded-3xl p-8 transition-all duration-500 bg-white/[0.02] text-center flex flex-col items-center justify-center h-full group-active:scale-95 ${settings.theme === 'Gold' ? 'border-gold-500/10 group-hover:border-gold-500/50 hover:bg-gold-500/[0.02]' : 'border-white/5 group-hover:border-fuchsia-500/50 hover:bg-fuchsia-500/[0.02]'}`}>
+                      <div className={`w-14 h-14 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-4 transition-colors ${settings.theme === 'Gold' ? 'group-hover:bg-gold-500/20' : 'group-hover:bg-fuchsia-500/20'}`}>
+                        <Activity className={`text-slate-500 transition-colors ${settings.theme === 'Gold' ? 'group-hover:text-gold-400' : 'group-hover:text-fuchsia-400'}`} size={24} />
                       </div>
                       <p className="text-slate-400 font-bold text-sm tracking-tight">Chụp ảnh mới</p>
                       <p className="text-[10px] text-slate-600 mt-1 uppercase font-black">Camera</p>
@@ -990,11 +1027,15 @@ export default function App() {
                       <button 
                         onClick={() => analyzeImage()} 
                         disabled={loading}
-                        className="relative w-full overflow-hidden group bg-cyan-600 text-white py-5 px-8 rounded-[1.5rem] font-black text-xl hover:bg-cyan-500 transition-all disabled:bg-slate-800 disabled:text-slate-600 shadow-[0_10px_30px_rgba(8,145,178,0.3)] active:scale-[0.98]"
+                        className={`relative w-full overflow-hidden group py-5 px-8 rounded-[1.5rem] font-black text-xl transition-all disabled:bg-slate-800 disabled:text-slate-600 active:scale-[0.98] ${
+                          settings.theme === 'Gold' 
+                            ? 'bg-gold-600 text-gold-950 hover:bg-gold-500 shadow-[0_10px_30px_rgba(234,179,8,0.3)]' 
+                            : 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-[0_10px_30px_rgba(8,145,178,0.3)]'
+                        }`}
                       >
                         <span className="relative z-10 tracking-tighter">{loading ? "ĐANG XỬ LÝ..." : "PHÂN TÍCH NGAY"}</span>
                         <motion.div 
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+                          className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000`}
                         />
                       </button>
                     </motion.div>
@@ -1025,8 +1066,8 @@ export default function App() {
                 className={`bg-slate-900/40 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 ${mode === 'Pro' ? 'lg:col-span-7' : 'w-full'}`}
               >
                 <div className="flex items-center gap-5 mb-10">
-                  <div className="p-4 bg-fuchsia-500/10 rounded-2xl border border-fuchsia-500/20 shadow-[0_0_20px_rgba(217,70,239,0.15)]">
-                    <Brain className="w-8 h-8 text-fuchsia-400" />
+                  <div className={`p-4 rounded-2xl border shadow-[0_0_20px_rgba(217,70,239,0.15)] ${settings.theme === 'Gold' ? 'bg-gold-500/10 border-gold-500/20 text-gold-400' : 'bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-400'}`}>
+                    <Brain className="w-8 h-8" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">Kết quả phân tích</h2>
