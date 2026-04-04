@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
-import { Upload, Brain, AlertTriangle, HelpCircle, X, TrendingUp, TrendingDown, Minus, Settings, Activity, ShieldAlert, Info, Trash2, Loader2, CheckCircle2, XCircle, Trophy, Target, Wallet, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
+import { Upload, Brain, AlertTriangle, HelpCircle, X, TrendingUp, TrendingDown, Minus, Settings, Activity, ShieldAlert, Info, Trash2, Loader2, CheckCircle2, XCircle, Trophy, Target, Wallet, BarChart3, Zap, ThumbsUp, ThumbsDown, LineChart as LineChartIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { resizeImage } from './lib/imageUtils';
@@ -23,6 +23,7 @@ interface AnalysisResult {
   timestamp?: number;
   imageUrl?: string;
   status?: 'Win' | 'Loss' | 'Pending';
+  feedback?: 'up' | 'down';
   betSuggestion?: {
     amount: number;
     percentage: number;
@@ -44,7 +45,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'Focus' | 'Pro'>('Pro');
+  const [mode, setMode] = useState<'Focus' | 'Quick' | 'Pro'>('Pro');
   const [activeTab, setActiveTab] = useState<'analyze' | 'settings' | 'history' | 'patterns'>('analyze');
   const [toast, setToast] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -54,6 +55,7 @@ export default function App() {
     preferredPatterns: 'Cầu bệt',
     theme: 'Neon' as 'Neon' | 'Cyber',
     balance: 1000000, // Default 1M VND
+    autoAnalyze: true,
   });
 
   const updateStatus = (timestamp: number, status: 'Win' | 'Loss') => {
@@ -62,6 +64,17 @@ export default function App() {
     ));
     showToast(status === 'Win' ? "Chúc mừng! Bạn đã thắng ván này." : "Rất tiếc! Hãy thử lại ván sau.");
     playSound(status === 'Win' ? 'success' : 'error');
+  };
+
+  const handleFeedback = (timestamp: number, feedback: 'up' | 'down') => {
+    setHistory(prev => prev.map(item => 
+      item.timestamp === timestamp ? { ...item, feedback } : item
+    ));
+    if (analysis?.timestamp === timestamp) {
+      setAnalysis(prev => prev ? { ...prev, feedback } : null);
+    }
+    showToast(feedback === 'up' ? "Cảm ơn bạn đã phản hồi tốt!" : "Cảm ơn bạn, chúng tôi sẽ cải thiện AI.");
+    playSound('success');
   };
 
   const calculateStats = () => {
@@ -83,7 +96,6 @@ export default function App() {
       setLoading(true);
       setError(null);
       
-      // Use FileReader for better compatibility on some mobile browsers
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
@@ -91,7 +103,11 @@ export default function App() {
           setImage(result);
           setAnalysis(null);
           setLoading(false);
-          showToast("Đã nạp ảnh thành công!");
+          if (settings.autoAnalyze) {
+            analyzeImage(result);
+          } else {
+            showToast("Đã nạp ảnh thành công!");
+          }
         }
       };
       reader.onerror = () => {
@@ -129,8 +145,10 @@ export default function App() {
     }
   };
 
-  const analyzeImage = async () => {
-    if (!image) return;
+  const analyzeImage = async (imgOverride?: string) => {
+    const targetImage = imgOverride || image;
+    if (!targetImage) return;
+    
     setLoading(true);
     setLoadingStep("Đang chuẩn bị dữ liệu...");
     setAnalysis(null);
@@ -153,8 +171,8 @@ export default function App() {
       const ai = new GoogleGenAI({ apiKey });
       
       setLoadingStep("Đang tối ưu hóa hình ảnh...");
-      // Use a smaller dimension (512px) for much faster processing on mobile
-      const resizedImage = await resizeImage(image, 512, 512);
+      // Use a smaller dimension (384px) for even faster processing on mobile
+      const resizedImage = await resizeImage(targetImage, 384, 384);
       const base64Data = resizedImage.split(',')[1];
       
       if (!base64Data) {
@@ -166,7 +184,7 @@ export default function App() {
         model: "gemini-3.1-flash-lite-preview",
         contents: {
           parts: [
-            { text: `Phân tích cầu Tài Xỉu (ưu tiên '${settings.preferredPatterns}'). Trả về JSON: suggestion (Tài/Xỉu), confidenceScore (0-1), detectedPattern (tên mẫu hình nếu có, ví dụ: 'Cầu Bệt', 'Cầu 1-1', 'Cầu 2-2', 'Cầu Đảo'), reasons (mảng 3 đối tượng {text, contribution}).` },
+            { text: `Phân tích cầu Tài Xỉu (ưu tiên '${settings.preferredPatterns}'). Trả về JSON: {suggestion: 'Tài'|'Xỉu', confidenceScore: 0-1, detectedPattern: string, reasons: [{text, contribution: 'Tài'|'Xỉu'|'Neutral'}]}` },
             { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
           ]
         },
@@ -236,7 +254,7 @@ export default function App() {
         };
 
         result.timestamp = Date.now();
-        result.imageUrl = image;
+        result.imageUrl = targetImage;
         result.status = 'Pending';
         setAnalysis(result);
         setHistory(prev => [result, ...prev].slice(0, 10)); // Keep last 10
@@ -345,11 +363,15 @@ export default function App() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
                       <h4 className="font-black text-cyan-400 text-xs uppercase tracking-widest mb-2">Focus Mode</h4>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Tối giản, chỉ hiển thị kết quả Tài/Xỉu để quyết định nhanh.</p>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Tối giản, chỉ hiển thị kết quả Tài/Xỉu.</p>
                     </div>
                     <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
-                      <h4 className="font-black text-fuchsia-400 text-xs uppercase tracking-widest mb-2">Pro Mode</h4>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Chi tiết, hiển thị độ tin cậy, lý do kỹ thuật và mẫu hình.</p>
+                      <h4 className="font-black text-fuchsia-400 text-xs uppercase tracking-widest mb-2">Quick Mode</h4>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Nhanh, hiển thị kết quả và độ tin cậy.</p>
+                    </div>
+                    <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
+                      <h4 className="font-black text-white text-xs uppercase tracking-widest mb-2">Pro Mode</h4>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">Chi tiết, đầy đủ lý do và quản lý vốn.</p>
                     </div>
                   </div>
                 </section>
@@ -396,9 +418,21 @@ export default function App() {
           animate={{ y: 0, opacity: 1 }}
           className="mb-8 md:mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-4">
-            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-ping" />
-            <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">AI Engine v3.1 Live</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20">
+              <div className="w-2 h-2 rounded-full bg-cyan-500 animate-ping" />
+              <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">AI Engine v3.1 Live</span>
+            </div>
+            {settings.autoAnalyze && (
+              <motion.div 
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20"
+              >
+                <Zap size={10} className="text-fuchsia-400 fill-fuchsia-400" />
+                <span className="text-[10px] font-black text-fuchsia-400 uppercase tracking-widest">Speed Mode</span>
+              </motion.div>
+            )}
           </div>
           <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-4 leading-none">
             <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-slate-500">PATTERN</span>
@@ -467,11 +501,20 @@ export default function App() {
               FOCUS
             </button>
             <button 
+              onClick={() => setMode('Quick')}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Quick' ? 'text-fuchsia-400' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              {mode === 'Quick' && (
+                <motion.div layoutId="mode-bg" className="absolute inset-0 bg-fuchsia-500/10 rounded-xl -z-10 border border-fuchsia-500/20" />
+              )}
+              QUICK
+            </button>
+            <button 
               onClick={() => setMode('Pro')}
-              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Pro' ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`relative flex-1 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all duration-500 ${mode === 'Pro' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
             >
               {mode === 'Pro' && (
-                <motion.div layoutId="mode-bg" className="absolute inset-0 bg-cyan-500/10 rounded-xl -z-10 border border-cyan-500/20" />
+                <motion.div layoutId="mode-bg" className="absolute inset-0 bg-white/5 rounded-xl -z-10 border border-white/10" />
               )}
               PRO
             </button>
@@ -661,6 +704,20 @@ export default function App() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 mr-2">
+                          <button 
+                            onClick={() => handleFeedback(item.timestamp!, 'up')}
+                            className={`p-1.5 rounded-lg transition-all ${item.feedback === 'up' ? 'text-green-500 bg-green-500/10' : 'text-slate-600 hover:text-green-500'}`}
+                          >
+                            <ThumbsUp size={14} className={item.feedback === 'up' ? 'fill-green-500' : ''} />
+                          </button>
+                          <button 
+                            onClick={() => handleFeedback(item.timestamp!, 'down')}
+                            className={`p-1.5 rounded-lg transition-all ${item.feedback === 'down' ? 'text-red-500 bg-red-500/10' : 'text-slate-600 hover:text-red-500'}`}
+                          >
+                            <ThumbsDown size={14} className={item.feedback === 'down' ? 'fill-red-500' : ''} />
+                          </button>
+                        </div>
                         {item.status === 'Pending' ? (
                           <div className="flex items-center gap-2">
                             <button 
@@ -775,6 +832,25 @@ export default function App() {
                   />
                 </div>
                 
+                <div className="flex items-center justify-between p-6 bg-white/[0.02] rounded-3xl border border-white/5 hover:bg-white/[0.04] transition-all">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-fuchsia-400 fill-fuchsia-400" />
+                      <label className="text-sm font-black text-white tracking-tight">Tự động phân tích</label>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Auto-Analyze on Upload</p>
+                  </div>
+                  <button 
+                    onClick={() => setSettings({...settings, autoAnalyze: !settings.autoAnalyze})}
+                    className={`w-14 h-7 rounded-full transition-all duration-500 relative ${settings.autoAnalyze ? 'bg-fuchsia-600 shadow-[0_0_15px_rgba(192,38,211,0.4)]' : 'bg-slate-800'}`}
+                  >
+                    <motion.div 
+                      animate={{ x: settings.autoAnalyze ? 32 : 4 }}
+                      className="absolute top-1.5 w-4 h-4 bg-white rounded-full shadow-xl"
+                    />
+                  </button>
+                </div>
+
                 <div className="flex items-center justify-between p-6 bg-white/[0.02] rounded-3xl border border-white/5 hover:bg-white/[0.04] transition-all">
                   <div className="space-y-1">
                     <label className="text-sm font-black text-white tracking-tight">Thông báo hệ thống</label>
@@ -912,7 +988,7 @@ export default function App() {
                       </div>
                       
                       <button 
-                        onClick={analyzeImage} 
+                        onClick={() => analyzeImage()} 
                         disabled={loading}
                         className="relative w-full overflow-hidden group bg-cyan-600 text-white py-5 px-8 rounded-[1.5rem] font-black text-xl hover:bg-cyan-500 transition-all disabled:bg-slate-800 disabled:text-slate-600 shadow-[0_10px_30px_rgba(8,145,178,0.3)] active:scale-[0.98]"
                       >
@@ -962,22 +1038,58 @@ export default function App() {
                   {analysis ? (
                     <motion.div 
                       key="result"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={{
+                        hidden: { opacity: 0, x: 20 },
+                        visible: { 
+                          opacity: 1, 
+                          x: 0,
+                          transition: {
+                            staggerChildren: 0.1,
+                            when: "beforeChildren"
+                          }
+                        },
+                        exit: { opacity: 0, x: -20 }
+                      }}
                       className="space-y-10"
                     >
-                      <div className="bg-slate-950/40 p-12 rounded-[2.5rem] border border-white/5 text-center relative overflow-hidden group">
+                      <motion.div 
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          visible: { opacity: 1, y: 0 }
+                        }}
+                        className="bg-slate-950/40 p-12 rounded-[2.5rem] border border-white/5 text-center relative overflow-hidden group"
+                      >
                         <div className={`absolute inset-0 opacity-20 blur-[100px] transition-colors duration-1000 ${analysis.suggestion === 'Tài' ? 'bg-red-500' : 'bg-cyan-500'}`} />
                         
                         <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px] mb-6 relative z-10">AI PREDICTION</p>
-                        <div className={`text-8xl md:text-[10rem] font-black mb-8 tracking-tighter relative z-10 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-colors duration-1000 ${analysis.suggestion === 'Tài' ? 'text-red-500' : 'text-cyan-400'}`}>
+                        <div className={`text-8xl md:text-[10rem] font-black mb-4 tracking-tighter relative z-10 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-colors duration-1000 ${analysis.suggestion === 'Tài' ? 'text-red-500' : 'text-cyan-400'}`}>
                           {analysis.suggestion}
                         </div>
 
-                        {analysis.detectedPattern && (
+                        <div className="flex justify-center gap-4 mb-8 relative z-10">
+                          <button 
+                            onClick={() => analysis.timestamp && handleFeedback(analysis.timestamp, 'up')}
+                            className={`p-3 rounded-2xl border transition-all ${analysis.feedback === 'up' ? 'bg-green-500/20 border-green-500/50 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-white/5 border-white/10 text-slate-500 hover:text-green-500 hover:border-green-500/30'}`}
+                          >
+                            <ThumbsUp size={20} className={analysis.feedback === 'up' ? 'fill-green-500' : ''} />
+                          </button>
+                          <button 
+                            onClick={() => analysis.timestamp && handleFeedback(analysis.timestamp, 'down')}
+                            className={`p-3 rounded-2xl border transition-all ${analysis.feedback === 'down' ? 'bg-red-500/20 border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-white/5 border-white/10 text-slate-500 hover:text-red-500 hover:border-red-500/30'}`}
+                          >
+                            <ThumbsDown size={20} className={analysis.feedback === 'down' ? 'fill-red-500' : ''} />
+                          </button>
+                        </div>
+
+                        {mode === 'Pro' && analysis.detectedPattern && (
                           <motion.div 
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            variants={{
+                              hidden: { opacity: 0, scale: 0.9 },
+                              visible: { opacity: 1, scale: 1 }
+                            }}
                             className="mb-8 relative z-10"
                           >
                             <button 
@@ -998,10 +1110,12 @@ export default function App() {
                           </motion.div>
                         )}
 
-                        {mode === 'Pro' && (
+                        {mode !== 'Focus' && (
                           <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            variants={{
+                              hidden: { opacity: 0, y: 10 },
+                              visible: { opacity: 1, y: 0 }
+                            }}
                             className="inline-flex items-center gap-3 bg-white/[0.03] px-6 py-2.5 rounded-full border border-white/10 relative z-10"
                           >
                             <Activity size={14} className="text-cyan-400" />
@@ -1009,13 +1123,15 @@ export default function App() {
                             <span className="text-sm font-black text-white font-mono">{(analysis.confidenceScore * 100).toFixed(0)}%</span>
                           </motion.div>
                         )}
-                      </div>
+                      </motion.div>
 
                       {/* Capital Management Suggestion */}
                       {mode === 'Pro' && analysis.betSuggestion && (
                         <motion.div 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: { opacity: 1, y: 0 }
+                          }}
                           className="bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-8 rounded-[2.5rem] border border-cyan-500/20 shadow-2xl relative overflow-hidden"
                         >
                           <div className="absolute top-0 right-0 p-6 opacity-10">
