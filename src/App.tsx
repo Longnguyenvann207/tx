@@ -525,7 +525,7 @@ export default function App() {
       <main className="relative z-10">
         <motion.div 
           layout
-          className={`max-w-6xl mx-auto ${activeTab === 'analyze' ? `grid gap-8 ${mode === 'Focus' ? 'md:grid-cols-1 max-w-2xl' : 'lg:grid-cols-12'}` : ''}`}
+          className={`max-w-6xl mx-auto ${activeTab === 'analyze' ? `grid gap-8 ${mode === 'Pro' ? 'lg:grid-cols-12' : 'md:grid-cols-1 max-w-2xl'}` : ''}`}
         >
           {activeTab === 'history' && (
             <motion.div 
@@ -917,7 +917,7 @@ export default function App() {
               {/* Upload Section */}
               <motion.div 
                 layout
-                className={`bg-slate-900/40 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 ${mode === 'Pro' ? 'lg:col-span-5' : ''}`}
+                className={`bg-slate-900/40 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 ${mode === 'Pro' ? 'lg:col-span-5' : 'w-full'}`}
               >
                 <div className="flex items-center gap-5 mb-10">
                   <div className="p-4 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
@@ -1022,7 +1022,7 @@ export default function App() {
               {/* Results Section */}
               <motion.div 
                 layout
-                className={`bg-slate-900/40 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 ${mode === 'Pro' ? 'lg:col-span-7' : ''}`}
+                className={`bg-slate-900/40 backdrop-blur-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white/5 ${mode === 'Pro' ? 'lg:col-span-7' : 'w-full'}`}
               >
                 <div className="flex items-center gap-5 mb-10">
                   <div className="p-4 bg-fuchsia-500/10 rounded-2xl border border-fuchsia-500/20 shadow-[0_0_20px_rgba(217,70,239,0.15)]">
