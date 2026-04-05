@@ -20,6 +20,7 @@ interface AnalysisResult {
   reasons: Reason[];
   confidenceScore: number;
   detectedPattern?: string;
+  betStrategy?: string;
   timestamp?: number;
   imageUrl?: string;
   status?: 'Win' | 'Loss' | 'Pending';
@@ -32,10 +33,12 @@ interface AnalysisResult {
 }
 
 const PATTERNS = [
-  { name: 'Cầu Bệt', desc: 'Chuỗi liên tiếp 1 bên (Tài hoặc Xỉu) kéo dài từ 4-10 ván.', color: 'text-red-500' },
-  { name: 'Cầu 1-1', desc: 'Luân phiên Tài - Xỉu - Tài - Xỉu liên tục.', color: 'text-cyan-400' },
-  { name: 'Cầu 2-2', desc: 'Hai ván Tài, hai ván Xỉu lặp lại.', color: 'text-fuchsia-400' },
-  { name: 'Cầu Đảo', desc: 'Mẫu hình thay đổi đột ngột sau một chuỗi dài.', color: 'text-amber-400' }
+  { name: 'Cầu Bệt', desc: 'Chuỗi liên tiếp 1 bên (Tài hoặc Xỉu) kéo dài từ 4-10 ván. Tỉ lệ thắng cao khi bám cầu.', color: 'text-red-500' },
+  { name: 'Cầu 1-1', desc: 'Luân phiên Tài - Xỉu - Tài - Xỉu liên tục. Thường xuất hiện sau khi kết thúc cầu bệt.', color: 'text-cyan-400' },
+  { name: 'Cầu 2-2', desc: 'Hai ván Tài, hai ván Xỉu lặp lại. Mẫu hình ổn định cho việc đánh gấp thếp nhẹ.', color: 'text-fuchsia-400' },
+  { name: 'Cầu Đảo', desc: 'Mẫu hình thay đổi đột ngột sau một chuỗi dài. Cần quan sát kỹ để tránh gãy cầu.', color: 'text-amber-400' },
+  { name: 'Cầu 3-1-1', desc: 'Ba ván một bên, sau đó là một ván bên kia và một ván quay lại. Mẫu hình phức tạp.', color: 'text-emerald-400' },
+  { name: 'Cầu Nghiêng', desc: 'Một bên chiếm ưu thế rõ rệt (ví dụ 70% Tài). Thích hợp đánh theo xu hướng.', color: 'text-blue-400' }
 ];
 
 export default function App() {
@@ -52,7 +55,7 @@ export default function App() {
   const [settings, setSettings] = useState({
     volume: 0.5,
     toastEnabled: true,
-    preferredPatterns: 'Cầu bệt',
+    preferredPatterns: ['Dynamic'] as string[],
     theme: 'Neon' as 'Neon' | 'Cyber' | 'Gold',
     balance: 1000000, // Default 1M VND
     autoAnalyze: true,
@@ -180,38 +183,54 @@ export default function App() {
       }
 
       setLoadingStep("Đang gửi dữ liệu lên Neural Network...");
+      const patternContext = settings.preferredPatterns.includes('Dynamic') 
+        ? "Hãy tự động nhận diện mẫu hình phù hợp nhất từ dữ liệu thực tế." 
+        : `Ưu tiên nhận diện các mẫu hình: ${settings.preferredPatterns.join(', ')}.`;
+
       const response = await ai.models.generateContent({
         model: "gemini-3.1-flash-lite-preview",
         contents: {
           parts: [
-            { text: `Phân tích cầu Tài Xỉu (ưu tiên '${settings.preferredPatterns}'). Trả về JSON: {suggestion: 'Tài'|'Xỉu', confidenceScore: 0-1, detectedPattern: string, reasons: [{text, contribution: 'Tài'|'Xỉu'|'Neutral'}]}` },
+            { text: `Phân tích bảng kết quả Tài Xỉu trong ảnh. 
+            1. Nhận diện mẫu hình cầu. ${patternContext}
+            2. Tính toán xác suất dựa trên 20 phiên gần nhất. 
+            3. Mục tiêu: Đưa ra lệnh đặt cược chuẩn xác với tỉ lệ thắng 80%. Chấp nhận sai số (gãy) tối đa 2-3 tay trong 10 phiên.
+            4. Trả về JSON: {suggestion: 'Tài'|'Xỉu', confidenceScore: 0.8-0.99, detectedPattern: string, betStrategy: string, reasons: [{text: string, contribution: 'Tài'|'Xỉu'|'Neutral'}]}` },
             { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
           ]
         },
         config: {
-          systemInstruction: "Bạn là AI nhận diện cầu Tài Xỉu siêu tốc. Chỉ trả về JSON.",
+          systemInstruction: `Bạn là Hệ thống AI Phân tích Cầu Tài Xỉu Cao Cấp. 
+          Nhiệm vụ: Phân tích hình ảnh bảng cầu, nhận diện các mẫu hình toán học (Bệt, 1-1, 2-2, 3-1-1, Nghiêng, Đảo).
+          Yêu cầu: 
+          - Đưa ra dự đoán có độ chính xác mục tiêu 80%. 
+          - Phải phân tích được xu hướng (Trend) và dự đoán điểm gãy cầu.
+          - 'betStrategy' phải là một câu lệnh ngắn gọn, quyết đoán (ví dụ: 'Vào lệnh Tài 10% vốn', 'Gấp thếp Xỉu tay này').
+          - 'confidenceScore' phản ánh thực tế xác suất thắng (0.8 - 0.99).
+          - Luôn trả về JSON chuẩn.`,
           responseMimeType: "application/json",
           thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
           responseSchema: {
             type: Type.OBJECT,
             properties: {
               suggestion: { type: Type.STRING, description: "Tài hoặc Xỉu" },
-              detectedPattern: { type: Type.STRING, description: "Tên mẫu hình nhận diện được" },
+              detectedPattern: { type: Type.STRING, description: "Tên mẫu hình" },
+              betStrategy: { type: Type.STRING, description: "Câu lệnh đặt cược quyết đoán" },
               reasons: { 
                 type: Type.ARRAY, 
                 items: { 
                   type: Type.OBJECT, 
                   properties: {
-                    text: { type: Type.STRING, description: "Từ khóa lý do" },
-                    contribution: { type: Type.STRING, enum: ['Tài', 'Xỉu', 'Neutral'], description: "Đóng góp cho Tài, Xỉu hoặc Neutral" }
+                    text: { type: Type.STRING },
+                    contribution: { type: Type.STRING, enum: ['Tài', 'Xỉu', 'Neutral'] }
                   },
                   required: ["text", "contribution"]
                 },
-                description: "3 từ khóa lý do chính" 
+                description: "Lý do phân tích" 
               },
-              confidenceScore: { type: Type.NUMBER, description: "Điểm tự tin từ 0 đến 1" }
+              confidenceScore: { type: Type.NUMBER, description: "Xác suất thắng (0.8 - 0.99)" }
             },
-            required: ["suggestion", "reasons", "confidenceScore"]
+            required: ["suggestion", "reasons", "confidenceScore", "betStrategy"]
           }
         }
       });
@@ -233,17 +252,17 @@ export default function App() {
         let percentage = 0;
         let riskLevel: 'Low' | 'Medium' | 'High' | 'Extreme' = 'Low';
 
-        if (result.confidenceScore >= 0.95) {
-          percentage = 10;
+        if (result.confidenceScore >= 0.90) {
+          percentage = 15;
           riskLevel = 'Extreme';
         } else if (result.confidenceScore >= 0.85) {
-          percentage = 5;
+          percentage = 10;
           riskLevel = 'High';
-        } else if (result.confidenceScore >= 0.75) {
-          percentage = 3;
+        } else if (result.confidenceScore >= 0.80) {
+          percentage = 5;
           riskLevel = 'Medium';
         } else {
-          percentage = 1;
+          percentage = 2;
           riskLevel = 'Low';
         }
 
@@ -588,12 +607,13 @@ export default function App() {
                       </div>
                       <p className="text-3xl font-black text-green-500 font-mono">{calculateStats().wins}</p>
                     </div>
-                    <div className="bg-cyan-500/5 p-6 rounded-3xl border border-cyan-500/10 text-center">
+                    <div className={`${settings.theme === 'Gold' ? 'bg-gold-500/5 border-gold-500/10' : 'bg-cyan-500/5 border-cyan-500/10'} p-6 rounded-3xl border text-center`}>
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <Activity size={14} className="text-cyan-400" />
-                        <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Tỉ lệ</p>
+                        <Activity size={14} className={settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400'} />
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400'}`}>Tỉ lệ</p>
                       </div>
-                      <p className="text-3xl font-black text-cyan-400 font-mono">{calculateStats().winRate.toFixed(0)}%</p>
+                      <p className={`text-3xl font-black font-mono ${settings.theme === 'Gold' ? 'text-gold-400' : 'text-cyan-400'}`}>{calculateStats().winRate.toFixed(0)}%</p>
+                      <p className="text-[8px] font-bold text-slate-600 mt-1 uppercase tracking-tighter">Target: 80% Accuracy</p>
                     </div>
                   </div>
 
@@ -907,18 +927,35 @@ export default function App() {
                 <div className="space-y-6">
                   <div>
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mẫu hình ưu tiên</label>
-                    <p className="text-xs text-slate-400 mt-1">AI sẽ tập trung tìm kiếm mẫu hình này</p>
+                    <p className="text-xs text-slate-400 mt-1">AI sẽ tập trung tìm kiếm các mẫu hình này (Chọn nhiều hoặc Dynamic)</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    {['Cầu bệt', 'Cầu 1-1', 'Cầu 2-2', 'Cầu đảo'].map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setSettings({...settings, preferredPatterns: p})}
-                        className={`px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all duration-500 ${settings.preferredPatterns === p ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/20 hover:text-slate-300'}`}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                    {['Dynamic', ...PATTERNS.map(p => p.name)].map((p) => {
+                      const isSelected = settings.preferredPatterns.includes(p);
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => {
+                            if (p === 'Dynamic') {
+                              setSettings({...settings, preferredPatterns: ['Dynamic']});
+                            } else {
+                              let newPatterns = settings.preferredPatterns.filter(item => item !== 'Dynamic');
+                              if (isSelected) {
+                                newPatterns = newPatterns.filter(item => item !== p);
+                                if (newPatterns.length === 0) newPatterns = ['Dynamic'];
+                              } else {
+                                newPatterns = [...newPatterns, p];
+                              }
+                              setSettings({...settings, preferredPatterns: newPatterns});
+                            }
+                          }}
+                          className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500 flex items-center justify-center gap-2 ${isSelected ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/20 hover:text-slate-300'}`}
+                        >
+                          {isSelected && <CheckCircle2 size={12} />}
+                          {p}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1109,6 +1146,21 @@ export default function App() {
                         <div className={`text-8xl md:text-[10rem] font-black mb-4 tracking-tighter relative z-10 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-colors duration-1000 ${analysis.suggestion === 'Tài' ? 'text-red-500' : 'text-cyan-400'}`}>
                           {analysis.suggestion}
                         </div>
+
+                        {analysis.betStrategy && (
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className={`mb-8 relative z-10 px-6 py-4 rounded-2xl border font-black text-xl tracking-tight shadow-xl mx-auto max-w-sm ${
+                              analysis.suggestion === 'Tài' 
+                                ? 'bg-red-500/10 border-red-500/30 text-red-400 shadow-red-500/10' 
+                                : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-cyan-500/10'
+                            }`}
+                          >
+                            <Zap size={24} className="inline-block mr-3 animate-pulse" />
+                            {analysis.betStrategy}
+                          </motion.div>
+                        )}
 
                         <div className="flex justify-center gap-4 mb-8 relative z-10">
                           <button 
