@@ -193,19 +193,22 @@ export default function App() {
           parts: [
             { text: `Phân tích bảng kết quả Tài Xỉu trong ảnh. 
             1. Nhận diện mẫu hình cầu. ${patternContext}
-            2. Tính toán xác suất dựa trên 20 phiên gần nhất. 
-            3. Mục tiêu: Đưa ra lệnh đặt cược chuẩn xác với tỉ lệ thắng 80%. Chấp nhận sai số (gãy) tối đa 2-3 tay trong 10 phiên.
-            4. Trả về JSON: {suggestion: 'Tài'|'Xỉu', confidenceScore: 0.8-0.99, detectedPattern: string, betStrategy: string, reasons: [{text: string, contribution: 'Tài'|'Xỉu'|'Neutral'}]}` },
+            2. Phân tích chi tiết 3 màu xúc xắc (dice results) của các phiên gần nhất để tìm quy luật biến thiên điểm số.
+            3. Tính toán xác suất dựa trên 20 phiên gần nhất và xu hướng của các viên xúc xắc riêng lẻ. 
+            4. Mục tiêu: Đưa ra lệnh đặt cược chuẩn xác với tỉ lệ thắng 80%. Chấp nhận sai số (gãy) tối đa 2-3 tay trong 10 phiên.
+            5. Trả về JSON: {suggestion: 'Tài'|'Xỉu', confidenceScore: 0.8-0.99, detectedPattern: string, betStrategy: string, reasons: [{text: string, contribution: 'Tài'|'Xỉu'|'Neutral'}]}` },
             { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
           ]
         },
         config: {
-          systemInstruction: `Bạn là Hệ thống AI Phân tích Cầu Tài Xỉu Cao Cấp. 
-          Nhiệm vụ: Phân tích hình ảnh bảng cầu, nhận diện các mẫu hình toán học (Bệt, 1-1, 2-2, 3-1-1, Nghiêng, Đảo).
+          systemInstruction: `Bạn là Hệ thống AI Phân tích Cầu Tài Xỉu Cao Cấp, chuyên sâu về xác suất thống kê và nhận diện mẫu hình ảnh. 
+          Nhiệm vụ: 
+          - Phân tích hình ảnh bảng cầu, đặc biệt chú ý đến 3 màu xúc xắc (đỏ, trắng, tím...) hoặc các điểm số xúc xắc riêng lẻ để tìm ra quy luật "hồi cầu" hoặc "bệt xúc xắc".
+          - Nhận diện các mẫu hình toán học (Bệt, 1-1, 2-2, 3-1-1, Nghiêng, Đảo).
           Yêu cầu: 
           - Đưa ra dự đoán có độ chính xác mục tiêu 80%. 
-          - Phải phân tích được xu hướng (Trend) và dự đoán điểm gãy cầu.
-          - 'betStrategy' phải là một câu lệnh ngắn gọn, quyết đoán (ví dụ: 'Vào lệnh Tài 10% vốn', 'Gấp thếp Xỉu tay này').
+          - Phải phân tích được xu hướng (Trend) của tổng điểm và xu hướng của từng viên xúc xắc.
+          - 'betStrategy' phải là một câu lệnh ngắn gọn, quyết đoán (ví dụ: 'Vào lệnh Tài 15% vốn', 'Gấp thếp Xỉu tay này').
           - 'confidenceScore' phản ánh thực tế xác suất thắng (0.8 - 0.99).
           - Luôn trả về JSON chuẩn.`,
           responseMimeType: "application/json",
@@ -221,12 +224,12 @@ export default function App() {
                 items: { 
                   type: Type.OBJECT, 
                   properties: {
-                    text: { type: Type.STRING },
+                    text: { type: Type.STRING, description: "Lý do chuyên môn (ví dụ: 'Xúc xắc 1-2-3 đang bệt xỉu', 'Cầu 1-1 hồi tài')" },
                     contribution: { type: Type.STRING, enum: ['Tài', 'Xỉu', 'Neutral'] }
                   },
                   required: ["text", "contribution"]
                 },
-                description: "Lý do phân tích" 
+                description: "Lý do phân tích chi tiết dựa trên cả tổng điểm và xúc xắc" 
               },
               confidenceScore: { type: Type.NUMBER, description: "Xác suất thắng (0.8 - 0.99)" }
             },
